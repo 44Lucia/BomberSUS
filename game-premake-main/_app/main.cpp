@@ -205,7 +205,7 @@ int draw(void)
 
 #pragma region CargarObjects
     if (temp != "OBJECTS") {
-        cout << "Object mal formado" << endl;
+        cout << "Objecto mal formado" << endl;
         return 7;
     }
 
@@ -246,7 +246,7 @@ void loadTextures() {
 
     map<string, string>::iterator it;
 
-    cout << "TEXTURAS CARGADAS: " << endl;
+    cout << "TEXTURAS CARGADAS CORRECTAMENTE: " << endl;
 
     for (it = textures.begin(); it != textures.end(); it++){
         
@@ -316,7 +316,6 @@ int main(void)
                 {
                     DrawCubeTexture(textures2D[t], cubePosition, cubeSize[0], cubeSize[1], cubeSize[2], GRAY);
                 }
-                //DrawCubeWires(cubePosition, cubeSize[0], cubeSize[1], cubeSize[2], MAROON);
             }
         }
 
