@@ -1,5 +1,7 @@
 SUS;0.2;;
-TITLE;Esto es el título;;
+TITLE;BomberSUS;;
+MUSIC;background.ogg;;
+CAMERA_HEIGHT;20;;
 TEXTURES;4;;
 C;verde_claro.png;;
 V;verde_oscuro.png;;

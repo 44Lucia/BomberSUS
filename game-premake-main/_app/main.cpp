@@ -23,7 +23,9 @@ using namespace std;
 
 #pragma region Variables
 float version = 0.0;
+std::string bgMusic = "";
 int num_textures;
+float cameraHeight = 0.0;
 string title;
 map<string, string> textures;
 
@@ -93,44 +95,95 @@ int draw(void)
         return 2;
     }
     getline(level, temp, ';');
-    version = stof(temp);
-    cout << version << endl;
+    std::cout << temp << std::endl;
+
+    version = std::stof(temp);
 
     getline(level, temp);
-    getline(level, temp, ';');
 
 #pragma endregion
 
 #pragma region Titulo
+    getline(level, temp, ';');
+    cout << temp << std::endl;
     if (temp != "TITLE") {
-        cout << "Titulo mal formado\n";
+        std::cout << "Titulo no encontrado" << std::endl;
         return 3;
     }
-    else {
 
+    getline(level, temp, ';');
+    cout << temp << endl;
+    if (temp == "")
+    {
+        std::cout << "El titulo esta vacio" << std::endl;
+        return 4;
+    }
+    else
+    {
         title = temp;
     }
-    cout << title << endl;
 
     getline(level, temp);
-    getline(level, temp, ';');
+    
+#pragma endregion
+
+#pragma region Musica
+    if (version >= 0.5) {
+        getline(level, temp, ';');
+        cout << temp << endl;
+        if (temp != "MUSIC") {
+            cout << "Música no encontrada" << endl;
+            return 4;
+        }
+
+        getline(level, temp, ';');
+        cout << temp << endl;
+        string extensionName = temp.substr(temp.find("."));
+        cout << "El nombre de la extension es: " << extensionName << endl;
+        if (extensionName != ".ogg") {
+            cout << "La extension de la música no es correcta, necesitas .ogg" << endl;
+            return 5;
+        }
+        bgMusic = temp;
+
+        getline(level, temp);
+    }
+#pragma endregion
+
+#pragma region Camara
+    if (version >= 1.0) {
+        getline(level, temp, ';');
+        cout << temp << endl;
+        if (temp != "CAMERA_HEIGHT") {
+            cout << "Camara no encontrada" << endl;
+            return 6;
+        }
+
+        getline(level, temp, ';');
+        cout << temp << endl;
+        cameraHeight = stof(temp);
+
+        getline(level, temp);
+    }
 #pragma endregion
 
 #pragma region Texturas
+    getline(level, temp, ';');
+    cout << temp << endl;
+
     if (temp != "TEXTURES") {
-        cout << "Texturas mal cargadas\n";
-        return 4;
+        cout << "Texturas mal cargadas" << endl;
+        return 7;
     }
     getline(level, temp, ';');
-
+    cout << temp << endl;
 
     num_textures = stoi(temp);
-    cout << temp << endl;
+    getline(level, temp);
 
 #pragma endregion
 
 #pragma region CargarMapa
-    getline(level, temp);
     for (int i = 0; i < num_textures; i++)
     {
         string key;
@@ -143,21 +196,16 @@ int draw(void)
 
         cout << key << ": " << value << endl;
         getline(level, temp);
-
-
-
     }
     getline(level, temp, ';');
     cout << temp << endl;
-
-
 #pragma endregion
 
 #pragma region CargarBackground
 
     if (temp != "BACKGROUND") {
         cout << "Background mal formado" << endl;
-        return 5;
+        return 8;
     }
 
     getline(level, temp, ';');
@@ -193,7 +241,7 @@ int draw(void)
 #pragma region CargarForeground
     if (temp != "FOREGROUND") {
         cout << "Foreground mal formado" << endl;
-        return 6;
+        return 9;
     }
 
     getline(level, temp, ';');
@@ -230,7 +278,7 @@ int draw(void)
 #pragma region CargarObjects
     if (temp != "OBJECTS") {
         cout << "Objecto mal formado" << endl;
-        return 7;
+        return 10;
     }
 
     getline(level, temp, ';');
@@ -370,7 +418,7 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
-    camera.position = { 0.0f, 15.0f, 2.0f };  // Camera position
+    camera.position = { 0.0f, cameraHeight, 2.0f };  // Camera position
     camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
@@ -447,7 +495,11 @@ int main(void)
             }
         }
     }
-    
+
+    Music bgMusic2 = LoadMusicStream(bgMusic.c_str());
+    bgMusic2.looping = true;
+    PlayMusicStream(bgMusic2);
+
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
@@ -459,6 +511,7 @@ int main(void)
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
+        UpdateMusicStream(bgMusic2);
 
         //Inserto bombas en el vector para luego dibujarlas si vector.size > 0
         if (IsKeyPressed(KEY_SPACE) && players[0]->maxBombs > player1Bombs.size()) {
@@ -489,7 +542,7 @@ int main(void)
 
         BeginMode3D(camera);
 
-        //Render background
+        //Renderizado background
         for (size_t i = 0; i < background_h; i++)
         {
             for (size_t j = 0; j < background_w; j++)
@@ -505,16 +558,12 @@ int main(void)
             }
         }
 
-        //Render foreground
+        //Renderizado foreground
         for (size_t i = 0; i < foreground_h; i++)
         {
             for (size_t j = 0; j < foreground_w; j++)
             {
-                if (foreground[i][j] == "L") {
-                    std::string t = foreground[i][j];
-                    DrawCubeTexture(textures2D[t], foregroundPosition[i][j], 1.0f, 1.0f, 1.0f, WHITE);
-                }
-                else if (foreground[i][j] == "P") {
+                if (foreground[i][j] == "P") {
                     std::string t = foreground[i][j];
                     DrawCubeTexture(textures2D[t], foregroundPosition[i][j], 1.0f, 1.0f, 1.0f, WHITE);
                 }
@@ -525,14 +574,10 @@ int main(void)
             }
         }
 
-        //Players render and input
-        for (int i = 0; i < players.size(); i++)
-        {
+        //Renderizado del jugador y el input
+        for (int i = 0; i < players.size(); i++) {
             if (players[i]->num == 1) {
-
-
                 if (IsKeyPressed(KEY_D) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
-
                     players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -540,7 +585,6 @@ int main(void)
                     }
                 }
                 else if (IsKeyPressed(KEY_A) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
-
                     players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -548,7 +592,6 @@ int main(void)
                     }
                 }
                 else if (IsKeyPressed(KEY_W) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
-
                     players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -556,7 +599,6 @@ int main(void)
                     }
                 }
                 else if (IsKeyPressed(KEY_S) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
-
                     players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -570,10 +612,7 @@ int main(void)
             }
 
             else if (players[i]->num == 2) {
-
-
                 if (IsKeyPressed(KEY_RIGHT) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
-
                     players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -581,7 +620,6 @@ int main(void)
                     }
                 }
                 else if (IsKeyPressed(KEY_LEFT) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
-
                     players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -589,7 +627,6 @@ int main(void)
                     }
                 }
                 else if (IsKeyPressed(KEY_UP) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
-
                     players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -597,7 +634,6 @@ int main(void)
                     }
                 }
                 else if (IsKeyPressed(KEY_DOWN) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
-
                     players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
                     if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
                         players[i]->maxBombs++;
@@ -612,10 +648,9 @@ int main(void)
         }
 
 
-        //Bombs render and logic
+        //Bombas
         if (player1Bombs.size() > 0) {
-            for (int i = 0; i < player1Bombs.size(); i++)
-            {
+            for (int i = 0; i < player1Bombs.size(); i++) {
                 player1Bombs[i]->timeToExplode -= deltaTime;
                 if (player1Bombs[i]->timeToExplode > 0) {
                     DrawSphere({ player1Bombs[i]->pos_x, 1.0f, player1Bombs[i]->pos_z }, 0.1 + 0.2f * abs(sin(player1Bombs[i]->timeToExplode * 2)), BLACK);
