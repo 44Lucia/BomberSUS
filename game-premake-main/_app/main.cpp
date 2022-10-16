@@ -25,7 +25,7 @@ using namespace std;
 float version = 0.0;
 std::string bgMusic = "";
 int num_textures;
-float cameraHeight = 0.0;
+float cameraHeight = -1.0;
 string title;
 map<string, string> textures;
 
@@ -166,7 +166,13 @@ int draw(void)
         getline(level, temp);
     }
 #pragma endregion
-
+    if (version <= 0.21){
+        getline(level, temp); 
+        getline(level, temp);
+    }
+    else if (version <= 0.51) {
+        getline(level, temp);
+    }
 #pragma region Texturas
     getline(level, temp, ';');
     cout << temp << endl;
@@ -418,12 +424,16 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
-    camera.position = { 0.0f, cameraHeight, 2.0f };  // Camera position
+    if (cameraHeight < 0) {
+        camera.position = { 0.0f, 20.0f, 2.0f }; 
+    }
     camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
+
+    //Margins
     float x_margin = background_w % 2 == 0 ? .5 : 0;
     float z_margin = background_h % 2 == 0 ? .5 : 0;
     float x_offset = background_w / 2;
@@ -496,9 +506,13 @@ int main(void)
         }
     }
 
-    Music bgMusic2 = LoadMusicStream(bgMusic.c_str());
-    bgMusic2.looping = true;
-    PlayMusicStream(bgMusic2);
+    Music bgMusic2;
+    if (version >= 0.5) {
+        InitAudioDevice();
+        bgMusic2 = LoadMusicStream(bgMusic.c_str());
+        bgMusic2.looping = true;
+        PlayMusicStream(bgMusic2);
+    }
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -511,7 +525,9 @@ int main(void)
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
-        UpdateMusicStream(bgMusic2);
+        if (version >= 0.5) {
+            UpdateMusicStream(bgMusic2);
+        }
 
         //Inserto bombas en el vector para luego dibujarlas si vector.size > 0
         if (IsKeyPressed(KEY_SPACE) && players[0]->maxBombs > player1Bombs.size()) {
