@@ -53,6 +53,10 @@ struct Player {
     bool dead;
 };
 
+bool gameOver = false;
+bool hasPlayer1Won = false;
+bool hasPlayer2Won = false;
+
 struct Bombs {
     float pos_x;
     float pos_z;
@@ -424,8 +428,11 @@ int main(void)
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
-    if (cameraHeight < 0) {
-        camera.position = { 0.0f, 20.0f, 2.0f }; 
+    //Comprobar la version para cambiar el tamaño de la camara
+    if (version >= 1.0) {
+        camera.position = { 0.0f, cameraHeight, 2.0f }; 
+    }else {
+        camera.position = { 0.0f, 20.0f, 2.0f };  // Camera position
     }
     camera.target = { 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = { 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
@@ -816,16 +823,23 @@ int main(void)
             }
         }
 
-        if (powerUps.size() > 0)
-        {
-            for (int i = 0; i < powerUps.size(); i++)
-            {
+        if (powerUps.size() > 0){
+            for (int i = 0; i < powerUps.size(); i++){
                 DrawCube(powerUps[i], 0.4f, 0.4f, 0.4f, RED);
             }
         }
 
 
         EndMode3D();
+
+        if (!gameOver) {
+            if (players[1]->dead) { hasPlayer1Won = true; gameOver = true;}
+            else if (players[0]->dead) { hasPlayer2Won = true; gameOver = true; }
+        }
+
+        if (hasPlayer1Won) { DrawText("Player 1 wins!", screenWidth / 2, 40, 20, DARKGRAY); }
+        if (hasPlayer2Won) { DrawText("Player 2 wins!", screenWidth / 2, 40, 20, DARKGRAY); }
+
 
         DrawText("BomberSUS", 10, 40, 20, DARKGRAY);
 
