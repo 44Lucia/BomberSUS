@@ -75,7 +75,7 @@ std::vector <Vector3> powerUps;
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int draw(void)
+int Draw(void)
 {
 
 #pragma region AbrirArchivo
@@ -143,7 +143,6 @@ int draw(void)
         getline(level, temp, ';');
         cout << temp << endl;
         string extensionName = temp.substr(temp.find("."));
-        cout << "El nombre de la extension es: " << extensionName << endl;
         if (extensionName != ".ogg") {
             cout << "La extension de la música no es correcta, necesitas .ogg" << endl;
             return 5;
@@ -324,7 +323,7 @@ int draw(void)
 
 }
 
-void loadTextures() {
+void LoadTextures() {
     //Carga de texturas
     std::map<std::string, std::string>::iterator it;
 
@@ -360,25 +359,25 @@ bool PowerUps(Vector3 pos) {
     return false;
 }
 
-bool Destructive(Vector3 pos) {
+bool IsDestructible(Vector3 pos) {
     for (size_t i = 0; i < objects_h; i++)
     {
         for (size_t j = 0; j < objects_w; j++)
         {
             if (foregroundPosition[i][j].x == pos.x && foregroundPosition[i][j].y == pos.y && foregroundPosition[i][j].z == pos.z) {
-                if (objects[i][j] == "D" || objects[i][j] == "U") { return true; }
+                if (objects[i][j] == "D" || objects[i][j] == "W") { return true; }
             }
         }
     }
     return false;
 }
 
-void Destroy(Vector3 pos) {
+void DestroyPowerUp(Vector3 pos) {
     for (size_t i = 0; i < objects_h; i++){
         for (size_t j = 0; j < objects_w; j++){
             if (foregroundPosition[i][j].x == pos.x && foregroundPosition[i][j].y == pos.y && foregroundPosition[i][j].z == pos.z){
                 foreground[i][j] = "0";
-                if (objects[i][j] == "U"){
+                if (objects[i][j] == "W"){
                     objects[i][j] = "E";
                     Vector3 newPowerUp = { pos.x, 1, pos.z };
                     powerUps.push_back(newPowerUp);
@@ -400,7 +399,6 @@ void TakePowerUps(Vector3 pos) {
                 if (objects[i][j] == "E"){
                     objects[i][j] = "0";
                 }
-                //Aqui eliminamos Power Ups del vector
                 if (powerUps.size() > 0) {
                     for (int i = 0; i < powerUps.size(); i++) {
                         if (powerUps[i].x == pos.x && powerUps[i].z == pos.z) {
@@ -423,8 +421,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, title.c_str());
 
-    draw();
-    loadTextures();
+    Draw();
+    LoadTextures();
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
@@ -494,7 +492,7 @@ int main(void)
                 objects[i][j] = "0";
                 Player* newPlayer = new Player;
                 newPlayer->position = foregroundPosition[i][j];
-                newPlayer->color = GREEN;
+                newPlayer->color = BLUE;
                 newPlayer->maxBombs = 1;
                 newPlayer->num = 1;
                 newPlayer->dead = false;
@@ -504,7 +502,7 @@ int main(void)
                 objects[i][j] = "0";
                 Player* newPlayer = new Player;
                 newPlayer->position = foregroundPosition[i][j];
-                newPlayer->color = RED;
+                newPlayer->color = PURPLE;
                 newPlayer->maxBombs = 1;
                 newPlayer->num = 2;
                 newPlayer->dead = false;
@@ -536,21 +534,24 @@ int main(void)
             UpdateMusicStream(bgMusic2);
         }
 
-        //Inserto bombas en el vector para luego dibujarlas si vector.size > 0
-        if (IsKeyPressed(KEY_SPACE) && players[0]->maxBombs > player1Bombs.size()) {
-            Bombs* newBomb = new Bombs;
-            newBomb->pos_x = players[0]->position.x;
-            newBomb->pos_z = players[0]->position.z;
-            newBomb->timeToExplode = 1.5f;
-            player1Bombs.push_back(newBomb);
-        }
+        if (!gameOver)
+        {
+            //Agregamos el input de las bombas, y el tiempo para que exploten
+            if (IsKeyPressed(KEY_SPACE) && players[0]->maxBombs > player1Bombs.size()) {
+                Bombs* newBomb = new Bombs;
+                newBomb->pos_x = players[0]->position.x;
+                newBomb->pos_z = players[0]->position.z;
+                newBomb->timeToExplode = 2.0f;
+                player1Bombs.push_back(newBomb);
+            }
 
-        if (IsKeyPressed(KEY_ENTER) && players[1]->maxBombs > player2Bombs.size()) {
-            Bombs* newBomb = new Bombs;
-            newBomb->pos_x = players[1]->position.x;
-            newBomb->pos_z = players[1]->position.z;
-            newBomb->timeToExplode = 1.5f;
-            player2Bombs.push_back(newBomb);
+            if (IsKeyPressed(KEY_ENTER) && players[1]->maxBombs > player2Bombs.size()) {
+                Bombs* newBomb = new Bombs;
+                newBomb->pos_x = players[1]->position.x;
+                newBomb->pos_z = players[1]->position.z;
+                newBomb->timeToExplode = 2.0f;
+                player2Bombs.push_back(newBomb);
+            }
         }
 
         // TODO: Update your variables here
@@ -598,78 +599,79 @@ int main(void)
         }
 
         //Renderizado del jugador y el input
-        for (int i = 0; i < players.size(); i++) {
-            if (players[i]->num == 1) {
-                if (IsKeyPressed(KEY_D) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
-                    players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+        if (!gameOver)
+        {
+            for (int i = 0; i < players.size(); i++) {
+                if (players[i]->num == 1) {
+                    if (IsKeyPressed(KEY_D) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
                     }
-                }
-                else if (IsKeyPressed(KEY_A) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
-                    players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    else if (IsKeyPressed(KEY_A) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
                     }
-                }
-                else if (IsKeyPressed(KEY_W) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
-                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    else if (IsKeyPressed(KEY_W) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
+                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
                     }
-                }
-                else if (IsKeyPressed(KEY_S) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
-                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    else if (IsKeyPressed(KEY_S) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
+                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
+                    }
+
+                    if (!players[i]->dead) {
+                        DrawSphere(players[i]->position, 0.4f, players[i]->color);
                     }
                 }
 
-                if (!players[i]->dead) {
-                    DrawSphere(players[i]->position, 0.4f, players[i]->color);
-                }
-            }
-
-            else if (players[i]->num == 2) {
-                if (IsKeyPressed(KEY_RIGHT) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
-                    players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                else if (players[i]->num == 2) {
+                    if (IsKeyPressed(KEY_RIGHT) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
+                    }
+                    else if (IsKeyPressed(KEY_LEFT) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
+                    }
+                    else if (IsKeyPressed(KEY_UP) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
+                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
+                    }
+                    else if (IsKeyPressed(KEY_DOWN) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
+                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
+                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                            players[i]->maxBombs++;
+                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                        }
+                    }
+                    if (!players[i]->dead) {
+                        DrawSphere(players[i]->position, 0.4f, players[i]->color);
                     }
                 }
-                else if (IsKeyPressed(KEY_LEFT) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
-                    players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                    }
-                }
-                else if (IsKeyPressed(KEY_UP) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
-                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                    }
-                }
-                else if (IsKeyPressed(KEY_DOWN) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
-                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
-                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->maxBombs++;
-                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                    }
-                }
-                if (!players[i]->dead) {
-                    DrawSphere(players[i]->position, 0.4f, players[i]->color);
-                }
-
             }
         }
-
 
         //Bombas
         if (player1Bombs.size() > 0) {
@@ -680,29 +682,29 @@ int main(void)
                 }
                 else if (player1Bombs[i]->timeToExplode < 0) {
                     //Miramos las 4 direcciones si hay un destructible en objects
-                    if (Destructive({ player1Bombs[i]->pos_x + 1, 1, player1Bombs[i]->pos_z })) {
-                        Destroy({ player1Bombs[i]->pos_x + 1, 1, player1Bombs[i]->pos_z });
+                    if (IsDestructible({ player1Bombs[i]->pos_x + 1, 1, player1Bombs[i]->pos_z })) {
+                        DestroyPowerUp({ player1Bombs[i]->pos_x + 1, 1, player1Bombs[i]->pos_z });
                     }
-                    else if (Destructive({ player1Bombs[i]->pos_x - 1, 1, player1Bombs[i]->pos_z })) {
+                    else if (IsDestructible({ player1Bombs[i]->pos_x - 1, 1, player1Bombs[i]->pos_z })) {
                         if (PowerUps({ player1Bombs[i]->pos_x - 1, 1, player1Bombs[i]->pos_z })) {
                             Vector3 newPowerUp = { player1Bombs[i]->pos_x - 1, 1, player1Bombs[i]->pos_z };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player1Bombs[i]->pos_x - 1, 1, player1Bombs[i]->pos_z });
+                        DestroyPowerUp({ player1Bombs[i]->pos_x - 1, 1, player1Bombs[i]->pos_z });
                     }
-                    else if (Destructive({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z + 1 })) {
+                    else if (IsDestructible({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z + 1 })) {
                         if (PowerUps({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z + 1 })) {
                             Vector3 newPowerUp = { player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z + 1 };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z + 1 });
+                        DestroyPowerUp({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z + 1 });
                     }
-                    else if (Destructive({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z - 1 })) {
+                    else if (IsDestructible({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z - 1 })) {
                         if (PowerUps({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z - 1 })) {
                             Vector3 newPowerUp = { player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z - 1 };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z - 1 });
+                        DestroyPowerUp({ player1Bombs[i]->pos_x, 1, player1Bombs[i]->pos_z - 1 });
                     }
                     //Miramos si hay players
                     if (player1Bombs[i]->pos_x == players[0]->position.x && player1Bombs[i]->pos_z == players[0]->position.z) {
@@ -744,7 +746,6 @@ int main(void)
                 }
             }
         }
-
         if (player2Bombs.size() > 0) {
             for (int i = 0; i < player2Bombs.size(); i++)
             {
@@ -753,34 +754,34 @@ int main(void)
                     DrawSphere({ player2Bombs[i]->pos_x, 1.0f, player2Bombs[i]->pos_z }, 0.1 + 0.2f * abs(sin(player2Bombs[i]->timeToExplode * 2)), BLACK);
                 }
                 else if (player2Bombs[i]->timeToExplode < 0) {
-                    //Miramos las 4 direcciones si hay un destructible en objects y si es power up o no
-                    if (Destructive({ player2Bombs[i]->pos_x + 1, 1, player2Bombs[i]->pos_z })) {
+                    //Miramos las 4 direcciones los destructibles
+                    if (IsDestructible({ player2Bombs[i]->pos_x + 1, 1, player2Bombs[i]->pos_z })) {
                         if (PowerUps({ player2Bombs[i]->pos_x + 1, 1, player2Bombs[i]->pos_z })) {
                             Vector3 newPowerUp = { player2Bombs[i]->pos_x + 1, 1, player2Bombs[i]->pos_z };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player2Bombs[i]->pos_x + 1, 1, player2Bombs[i]->pos_z });
+                        DestroyPowerUp({ player2Bombs[i]->pos_x + 1, 1, player2Bombs[i]->pos_z });
                     }
-                    else if (Destructive({ player2Bombs[i]->pos_x - 1, 1, player2Bombs[i]->pos_z })) {
+                    else if (IsDestructible({ player2Bombs[i]->pos_x - 1, 1, player2Bombs[i]->pos_z })) {
                         if (PowerUps({ player2Bombs[i]->pos_x - 1, 1, player2Bombs[i]->pos_z })) {
                             Vector3 newPowerUp = { player2Bombs[i]->pos_x - 1, 1, player2Bombs[i]->pos_z };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player2Bombs[i]->pos_x - 1, 1, player2Bombs[i]->pos_z });
+                        DestroyPowerUp({ player2Bombs[i]->pos_x - 1, 1, player2Bombs[i]->pos_z });
                     }
-                    else if (Destructive({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z + 1 })) {
+                    else if (IsDestructible({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z + 1 })) {
                         if (PowerUps({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z + 1 })) {
                             Vector3 newPowerUp = { player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z + 1 };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z + 1 });
+                        DestroyPowerUp({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z + 1 });
                     }
-                    else if (Destructive({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z - 1 })) {
+                    else if (IsDestructible({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z - 1 })) {
                         if (PowerUps({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z - 1 })) {
                             Vector3 newPowerUp = { player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z - 1 };
                             powerUps.push_back(newPowerUp);
                         }
-                        Destroy({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z - 1 });
+                        DestroyPowerUp({ player2Bombs[i]->pos_x, 1, player2Bombs[i]->pos_z - 1 });
                     }
                     //Miramos si hay players
                     if (player2Bombs[i]->pos_x == players[0]->position.x && player2Bombs[i]->pos_z == players[0]->position.z) {
@@ -823,22 +824,23 @@ int main(void)
             }
         }
 
+        //Dibujamos los Power Ups
         if (powerUps.size() > 0){
             for (int i = 0; i < powerUps.size(); i++){
-                DrawCube(powerUps[i], 0.4f, 0.4f, 0.4f, RED);
+                DrawCube(powerUps[i], 0.4f, 0.4f, 0.4f, YELLOW);
             }
         }
 
-
         EndMode3D();
 
+        //Condicion de derrota
         if (!gameOver) {
             if (players[1]->dead) { hasPlayer1Won = true; gameOver = true;}
             else if (players[0]->dead) { hasPlayer2Won = true; gameOver = true; }
         }
 
-        if (hasPlayer1Won) { DrawText("Player 1 wins!", screenWidth / 2, 40, 20, DARKGRAY); }
-        if (hasPlayer2Won) { DrawText("Player 2 wins!", screenWidth / 2, 40, 20, DARKGRAY); }
+        if (hasPlayer1Won) { DrawText("Enhorabuena el jugador de azul ha ganado!!", screenWidth / 2, 30, 20, DARKGRAY); }
+        if (hasPlayer2Won) { DrawText("Enhorabuena el jugador de purpura ha ganado!!", screenWidth / 2, 30, 20, DARKGRAY); }
 
 
         DrawText("BomberSUS", 10, 40, 20, DARKGRAY);
