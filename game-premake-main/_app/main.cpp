@@ -412,6 +412,82 @@ void TakePowerUps(Vector3 pos) {
     }
 }
 
+void RenderAndInputPlayer() {
+    if (!gameOver)
+    {
+        for (int i = 0; i < players.size(); i++) {
+            if (players[i]->num == 1) {
+                if (IsKeyPressed(KEY_D) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
+                    players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                else if (IsKeyPressed(KEY_A) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
+                    players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                else if (IsKeyPressed(KEY_W) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
+                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                else if (IsKeyPressed(KEY_S) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
+                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+
+                if (!players[i]->dead) {
+                    DrawSphere(players[i]->position, 0.4f, players[i]->color);
+                }
+            }
+
+            else if (players[i]->num == 2) {
+                if (IsKeyPressed(KEY_RIGHT) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
+                    players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                else if (IsKeyPressed(KEY_LEFT) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
+                    players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                else if (IsKeyPressed(KEY_UP) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
+                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                else if (IsKeyPressed(KEY_DOWN) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
+                    players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
+                    if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
+                        players[i]->maxBombs++;
+                        TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
+                    }
+                }
+                if (!players[i]->dead) {
+                    DrawSphere(players[i]->position, 0.4f, players[i]->color);
+                }
+            }
+        }
+    }
+}
+
 int main(void)
 {
     // Initialization
@@ -598,80 +674,8 @@ int main(void)
             }
         }
 
-        //Renderizado del jugador y el input
-        if (!gameOver)
-        {
-            for (int i = 0; i < players.size(); i++) {
-                if (players[i]->num == 1) {
-                    if (IsKeyPressed(KEY_D) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    else if (IsKeyPressed(KEY_A) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    else if (IsKeyPressed(KEY_W) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
-                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    else if (IsKeyPressed(KEY_S) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
-                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-
-                    if (!players[i]->dead) {
-                        DrawSphere(players[i]->position, 0.4f, players[i]->color);
-                    }
-                }
-
-                else if (players[i]->num == 2) {
-                    if (IsKeyPressed(KEY_RIGHT) && !Collisions({ players[i]->position.x + 1, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->position = { players[i]->position.x + 1, players[i]->position.y, players[i]->position.z };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    else if (IsKeyPressed(KEY_LEFT) && !Collisions({ players[i]->position.x - 1, players[i]->position.y, players[i]->position.z })) {
-                        players[i]->position = { players[i]->position.x - 1, players[i]->position.y, players[i]->position.z };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    else if (IsKeyPressed(KEY_UP) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 })) {
-                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z - 1 };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    else if (IsKeyPressed(KEY_DOWN) && !Collisions({ players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 })) {
-                        players[i]->position = { players[i]->position.x, players[i]->position.y, players[i]->position.z + 1 };
-                        if (PowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z })) {
-                            players[i]->maxBombs++;
-                            TakePowerUps({ players[i]->position.x, players[i]->position.y, players[i]->position.z });
-                        }
-                    }
-                    if (!players[i]->dead) {
-                        DrawSphere(players[i]->position, 0.4f, players[i]->color);
-                    }
-                }
-            }
-        }
+        //Renderizamos el jugador y el input
+        RenderAndInputPlayer();
 
         //Bombas
         if (player1Bombs.size() > 0) {
@@ -831,6 +835,9 @@ int main(void)
             }
         }
 
+        if (!gameOver) { ClearBackground(RAYWHITE); }
+        else { ClearBackground(DARKGRAY); }
+
         EndMode3D();
 
         //Condicion de derrota
@@ -839,8 +846,20 @@ int main(void)
             else if (players[0]->dead) { hasPlayer2Won = true; gameOver = true; }
         }
 
-        if (hasPlayer1Won) { DrawText("Enhorabuena el jugador de azul ha ganado!!", screenWidth / 2, 30, 20, DARKGRAY); }
-        if (hasPlayer2Won) { DrawText("Enhorabuena el jugador de purpura ha ganado!!", screenWidth / 2, 30, 20, DARKGRAY); }
+        if (hasPlayer1Won) { 
+            DrawText("Game Over!", screenWidth / 2.85f, screenHeight / 3.0f, 80, ORANGE);
+            string winText = "El ganador es el jugador de azul";
+            DrawText(winText.c_str(), screenWidth / 3.5f, screenHeight / 2.0f, 50, ORANGE);
+            DrawText("Presiona [ENTER] para salir", screenWidth / 2.65f, screenHeight / 1.6f, 30, BLACK);
+            if (IsKeyPressed(KEY_ENTER)) { exit(0); }
+        }
+        if (hasPlayer2Won) { 
+            DrawText("Game Over!", screenWidth / 2.85f, screenHeight / 3.0f, 80, ORANGE);
+            string winText = "El ganador es el jugador de purpura";
+            DrawText(winText.c_str(), screenWidth / 3.5f, screenHeight / 2.0f, 50, ORANGE);
+            DrawText("Presiona [ENTER] para salir", screenWidth / 2.65f, screenHeight / 1.6f, 30, BLACK);
+            if (IsKeyPressed(KEY_ENTER)) { exit(0); }
+        }
 
 
         DrawText("BomberSUS", 10, 40, 20, DARKGRAY);
